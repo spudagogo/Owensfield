@@ -4,7 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { areaFromPath, PUBLIC_PATH_PREFIXES } from "@/lib/routing/areas";
 import { canAccessArea } from "@/lib/rbac";
-import { viewerFromSupabaseUser } from "@/lib/auth/viewer";
+import { parseRgRoles, viewerFromSupabaseUser } from "@/lib/auth/viewer";
 
 /**
  * Middleware (minimal auth wiring).
@@ -46,7 +46,21 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const viewer = viewerFromSupabaseUser(data.user);
+  // Prefer DB-trusted viewer context (RLS-backed) when available.
+  // If RPC fails (e.g. migrations not applied yet), fall back to JWT app_metadata.
+  const rpc = await supabase.rpc("viewer_context");
+  const viewer = rpc.error || !rpc.data
+    ? viewerFromSupabaseUser(data.user)
+    : {
+        userId: String(rpc.data.user_id),
+        memberStatus:
+          rpc.data.member_status === "active" || rpc.data.member_status === "inactive"
+            ? rpc.data.member_status
+            : "inactive",
+        rgRoles: parseRgRoles(rpc.data.rg_roles),
+      };
+  const hasElectedRgRole =
+    !rpc.error && rpc.data ? Boolean((rpc.data as { has_elected_rg_role?: unknown }).has_elected_rg_role) : false;
   const area = areaFromPath(pathname);
 
   // Home is always accessible once logged in.
@@ -57,6 +71,15 @@ export async function middleware(req: NextRequest) {
     const target = req.nextUrl.clone();
     target.pathname = viewer.memberStatus === "inactive" ? "/renewal" : "/";
     return NextResponse.redirect(target);
+  }
+
+  // Extra guard: membership database is elected-RG only (Chair/Vice/Secretary/Treasurer).
+  if (pathname === "/rg/membership-database" || pathname.startsWith("/rg/membership-database/")) {
+    if (!hasElectedRgRole) {
+      const target = req.nextUrl.clone();
+      target.pathname = "/";
+      return NextResponse.redirect(target);
+    }
   }
 
   return res;

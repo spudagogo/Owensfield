@@ -2,8 +2,6 @@ import type { AppArea } from "@/lib/rbac";
 
 export const PUBLIC_PATH_PREFIXES: ReadonlyArray<string> = [
   "/login",
-  "/profile",
-  "/renewal",
 ];
 
 export function areaFromPath(pathname: string): AppArea | null {

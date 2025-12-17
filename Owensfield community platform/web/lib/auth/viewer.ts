@@ -16,7 +16,7 @@ export type Viewer = {
   rgRoles: RgRole[];
 };
 
-function isRgRole(value: unknown): value is RgRole {
+export function isRgRole(value: unknown): value is RgRole {
   return (
     value === "chair" ||
     value === "vice_chair" ||
@@ -24,6 +24,10 @@ function isRgRole(value: unknown): value is RgRole {
     value === "secretary" ||
     value === "rg_member"
   );
+}
+
+export function parseRgRoles(value: unknown): RgRole[] {
+  return Array.isArray(value) ? value.filter(isRgRole) : [];
 }
 
 export function viewerFromSupabaseUser(user: User): Viewer {
@@ -34,9 +38,7 @@ export function viewerFromSupabaseUser(user: User): Viewer {
     rawStatus === "active" || rawStatus === "inactive" ? rawStatus : "inactive";
 
   const rawRgRoles = appMetadata["ow_rg_roles"];
-  const rgRoles: RgRole[] = Array.isArray(rawRgRoles)
-    ? rawRgRoles.filter(isRgRole)
-    : [];
+  const rgRoles = parseRgRoles(rawRgRoles);
 
   return { userId: user.id, memberStatus, rgRoles };
 }
