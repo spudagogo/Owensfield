@@ -1,1 +1,53 @@
 @import "tailwindcss";
+
+/* Semantic color tokens (light by default; dark via prefers-color-scheme). */
+:root {
+  /* Surfaces */
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f8fafc;
+
+  /* Text */
+  --color-fg: #0f172a;
+  --color-fg-muted: #475569;
+
+  /* Borders */
+  --color-border: #e2e8f0;
+
+  /* Actions */
+  --color-primary: #2563eb;
+  --color-primary-fg: #ffffff;
+
+  /* Status */
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #0284c7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0b1220;
+    --color-surface: #0f172a;
+    --color-surface-2: #111c33;
+
+    --color-fg: #e2e8f0;
+    --color-fg-muted: #94a3b8;
+
+    --color-border: #24324a;
+
+    --color-primary: #60a5fa;
+    --color-primary-fg: #0b1220;
+
+    --color-success: #4ade80;
+    --color-warning: #fbbf24;
+    --color-danger: #f87171;
+    --color-info: #38bdf8;
+  }
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
