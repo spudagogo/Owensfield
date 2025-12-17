@@ -24,11 +24,19 @@ The app lives here:
 - `Owensfield community platform/web/`: Next.js application (App Router)
   - `app/`: route pages and layouts
   - `components/`: placeholder components used by routes
+  - `lib/`: RBAC + spec helpers (no auth wiring yet)
+  - `middleware.ts`: permission middleware scaffold (currently no-op until auth is connected)
+
+The (offline) database schema scaffolding lives here:
+
+- `Owensfield community platform/supabase/migrations/`: SQL migrations for Supabase Postgres
+  - `0001_init.sql`: initial “archive-only + auditable approvals” schema foundation
 
 Key placeholder routes (no auth/logic yet):
 
 - `app/profile`: Profile
 - `app/renewal`: Renewal / Reactivation
+- `app/archives`: Read-only archives entry point
 - `app/documents`: Documents archive
 - `app/polls`: Polls lifecycle (Draft → Pending → Active → Closed → Archived)
 - `app/meetings`: Meetings / agenda / minutes placeholders
@@ -41,8 +49,8 @@ Key placeholder routes (no auth/logic yet):
 ### What is intentionally NOT implemented yet
 
 - **No Supabase connection**
-- **No auth, RBAC, or “inactive member” gating**
-- **No data models or migrations**
+- **No auth wiring (so no enforcement yet in the running app)**
+- **No Supabase project configured/applied migrations yet** (schema files exist, but nothing is connected)
 - **No workflows / approvals / voting math**
 - **No UI polish**
 
