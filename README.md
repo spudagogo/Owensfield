@@ -62,3 +62,11 @@ From `Owensfield community platform/web/`:
 npm install
 npm run dev
 ```
+
+### Supabase Auth (now wired, still minimal)
+
+- The Next.js app includes middleware that (when Supabase env vars are set):
+  - redirects logged-out users to `/login`
+  - restricts **inactive** members to **Profile + Renewal** only
+  - restricts **RG** areas unless explicit RG roles are present
+- This is **scaffold-level**: no login UI flow is implemented yet, and Supabase is not provisioned in this repo.

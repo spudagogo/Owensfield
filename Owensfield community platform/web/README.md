@@ -17,3 +17,17 @@ For the overall project structure and the locked product rules, see the reposito
 npm install
 npm run dev
 ```
+
+### Supabase Auth wiring (scaffold)
+
+Set these env vars (see `.env.example`):
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+Notes:
+
+- Middleware will redirect unauthenticated users to `/login`.
+- Member status and RG roles are currently read from Supabase JWT `app_metadata`:
+  - `ow_member_status`: `"active"` or `"inactive"` (defaults to `"inactive"` if missing)
+  - `ow_rg_roles`: array of role strings (defaults to empty)
