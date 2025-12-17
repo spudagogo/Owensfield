@@ -1,1 +1,43 @@
+{
+  "color": {
+    "text": {
+      "primary": {
+        "value": "{color.neutral.900}",
+        "type": "color"
+      },
+      "secondary": {
+        "value": "{color.neutral.700}",
+        "type": "color"
+      },
+      "inverse": {
+        "value": "{color.neutral.0}",
+        "type": "color"
+      }
+    },
+
+    "background": {
+      "page": {
+        "value": "{color.neutral.100}",
+        "type": "color"
+      },
+      "surface": {
+        "value": "{color.neutral.0}",
+        "type": "color"
+      }
+    },
+
+    "button": {
+      "primary": {
+        "background": {
+          "value": "{color.brand.primary}",
+          "type": "color"
+        },
+        "text": {
+          "value": "{color.neutral.0}",
+          "type": "color"
+        }
+      }
+    }
+  }
+}
 
