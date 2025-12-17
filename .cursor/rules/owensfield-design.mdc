@@ -1,0 +1,26 @@
+---
+description: Owensfield UI and design rules (minimal admin-first)
+---
+
+## Owensfield: design rules
+
+### General UI principles
+- **Minimal, functional UI**: prioritize clarity and correctness over polish.
+- Avoid aesthetic redesigns unless explicitly requested.
+- Admin screens should be clearly labeled as **RG Admin** and avoid user-facing marketing copy.
+
+### Accessibility & semantics
+- Use semantic HTML (`<h1>`, `<table>`, `<label>`, `<button>`, `<details>`).
+- Ensure forms have labels and show clear error messages.
+- Prefer server-side rendering for admin screens (avoid client-only state unless needed).
+
+### Styling constraints
+- Use the existing Tailwind baseline; **no styling polish** unless requested.
+- Prefer **semantic tokens** (CSS variables) for colors when needed (e.g. `--color-fg`, `--color-bg`).
+
+### Data safety UX
+- For destructive-like actions (archive, owner reassignment, grouping), require:
+  - explicit confirmation (checkbox or similar)
+  - clear, admin-facing error messages on failure
+- Do not add hidden automation (no auto-unjoin, no implicit regrouping).
+

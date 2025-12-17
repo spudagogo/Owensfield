@@ -1,0 +1,39 @@
+---
+description: Owensfield Community Platform (v1.0 locked) system rules
+---
+
+## Owensfield: absolute system rules (authoritative)
+
+These rules apply to all work in this repo unless a task explicitly says otherwise.
+
+### Product spec authority
+- **Master Specification v1.0 (Locked)** is authoritative.
+- `docs/PERMISSIONS_AND_FAILURES.md` is authoritative for permissions + failure scenarios.
+- If there is any conflict, **the spec wins**.
+- If something is not described, **do not invent it**.
+
+### Prohibited features (non-negotiable)
+- **No discussion functionality**: no comments, replies, chat, forums, or debate threads.
+- **No implicit admin powers**: every action must be explicitly permitted by role.
+
+### Archive-only / non-destructive data
+- **Never hard-delete governance data**.
+- Use **status fields** and **`archived_at` timestamps**.
+- Archived items are **read-only** and must remain accessible.
+
+### Membership gating
+- **Inactive members** may access **only**:
+  - Profile
+  - Renewal / reactivation
+- Inactive members must not be able to view any protected content (documents, polls, meetings, governance, communications, finance, notices, actions).
+
+### Enforcement principles
+- Do **not** rely on frontend-only checks.
+- Prefer **DB-side enforcement** (RLS, triggers, RPC) + server middleware for routing.
+- All approvals and overrides must be **auditable**.
+
+### Change discipline
+- Do not add new features or workflows beyond the task.
+- Keep changes minimal and scoped.
+- Maintain existing behavior unless a task explicitly changes it.
+

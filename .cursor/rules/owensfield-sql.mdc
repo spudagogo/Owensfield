@@ -1,0 +1,26 @@
+---
+description: Owensfield database rules (RLS, audit, archive-only)
+---
+
+## Owensfield: database rules
+
+### RLS-first security model
+- Enforce permissions primarily in **Postgres**:
+  - RLS policies per table
+  - SECURITY DEFINER RPCs for privileged workflows
+  - Triggers for lifecycle/immutability
+- Never depend on UI-only checks for authorization.
+
+### Auditability
+- For privileged actions (approvals, enactments, owner changes, grouping):
+  - write an `ow.audit_log` entry with actor + entity + before/after as applicable
+- Prefer append-only logs; avoid updates/deletes on audit tables.
+
+### Archive-only
+- No hard deletes for governance and registry data.
+- Use `archived_at` and state machines; archived records are read-only.
+
+### Data invariants
+- Plot membership/grouping invariants must be enforced server-side (unique constraints + RPC validation).
+- Vote weights must be computed DB-side and stored immutably at vote time.
+
