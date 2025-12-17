@@ -82,6 +82,15 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // Plot Registry admin is elected-RG only.
+  if (pathname === "/rg/plots" || pathname.startsWith("/rg/plots/")) {
+    if (!hasElectedRgRole) {
+      const target = req.nextUrl.clone();
+      target.pathname = "/";
+      return NextResponse.redirect(target);
+    }
+  }
+
   return res;
 }
 
