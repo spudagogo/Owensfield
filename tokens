@@ -1,0 +1,11 @@
+tokens/
+├─ core/
+│  ├─ color.json
+│  ├─ spacing.json
+│  ├─ typography.json
+├─ semantic/
+│  ├─ color.json
+│  ├─ elevation.json
+├─ themes/
+│  ├─ light.json
+│  ├─ dark.json
