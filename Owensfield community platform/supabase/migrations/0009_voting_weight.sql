@@ -17,46 +17,70 @@ returns numeric(10,6)
 language sql
 stable
 as $$
-  with user_groups as (
-    select distinct pgm.plot_group_id
+  with my_plots as (
+    select distinct pp.plot_id
     from ow.plot_people pp
-    join ow.plots p on p.id = pp.plot_id
-    join ow.plot_group_memberships pgm on pgm.plot_id = p.id
     where pp.profile_id = p_user_id
       and pp.is_active = true
       and pp.archived_at is null
+  ),
+  plot_to_group as (
+    select p.id as plot_id, pgm.plot_group_id
+    from ow.plots p
+    left join ow.plot_group_memberships pgm
+      on pgm.plot_id = p.id
+     and pgm.archived_at is null
+    where p.id in (select plot_id from my_plots)
       and p.archived_at is null
-      and pgm.archived_at is null
+  ),
+  participation_units as (
+    -- Each participation unit is either a real plot_group_id OR an implicit singleton plot (when no group exists).
+    select
+      ptg.plot_id,
+      ptg.plot_group_id,
+      case
+        when ptg.plot_group_id is null then 1::numeric
+        else (select pg.voting_value::numeric from ow.plot_groups pg where pg.id = ptg.plot_group_id and pg.archived_at is null)
+      end as unit_value
+    from plot_to_group ptg
   ),
   eligible_people as (
-    -- All active members associated with any plot in the plot group (owners + tenants).
+    -- For grouped plots: eligible people across all plots in the group.
+    -- For ungrouped plots: eligible people on that plot only.
     select
-      pgm.plot_group_id,
+      u.plot_id,
+      u.plot_group_id,
       pp.profile_id
-    from ow.plot_group_memberships pgm
-    join ow.plots p on p.id = pgm.plot_id
-    join ow.plot_people pp on pp.plot_id = p.id
-    where pgm.plot_group_id in (select plot_group_id from user_groups)
-      and pgm.archived_at is null
-      and p.archived_at is null
-      and pp.archived_at is null
+    from participation_units u
+    join ow.plot_people pp
+      on (
+        (u.plot_group_id is null and pp.plot_id = u.plot_id)
+        or
+        (u.plot_group_id is not null and pp.plot_id in (
+          select pgm.plot_id
+          from ow.plot_group_memberships pgm
+          where pgm.plot_group_id = u.plot_group_id and pgm.archived_at is null
+        ))
+      )
+    where pp.archived_at is null
       and pp.is_active = true
       and ow.is_active_member(pp.profile_id)
-    group by pgm.plot_group_id, pp.profile_id
+    group by u.plot_id, u.plot_group_id, pp.profile_id
   ),
-  group_counts as (
-    select plot_group_id, count(*)::numeric as cnt
+  unit_counts as (
+    select plot_id, plot_group_id, count(*)::numeric as cnt
     from eligible_people
-    group by plot_group_id
+    group by plot_id, plot_group_id
   )
   select
     case
       when not ow.is_active_member(p_user_id) then 0::numeric(10,6)
       else coalesce((
-        select sum((pg.voting_value::numeric / nullif(gc.cnt, 0)))::numeric(10,6)
-        from user_groups ug
-        join ow.plot_groups pg on pg.id = ug.plot_group_id
-        join group_counts gc on gc.plot_group_id = ug.plot_group_id
+        select sum((u.unit_value / nullif(c.cnt, 0)))::numeric(10,6)
+        from participation_units u
+        join unit_counts c
+          on c.plot_id = u.plot_id
+         and (c.plot_group_id is not distinct from u.plot_group_id)
       ), 0::numeric(10,6))
     end
 $$;

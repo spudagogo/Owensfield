@@ -48,6 +48,10 @@ export default async function PlotRegistryPage(props: PageProps) {
 
   const rows = (data ?? []) as unknown as RegistryRow[];
 
+  const { data: groupsData } = await supabase.rpc("plot_group_summary");
+  const plotGroups =
+    (groupsData ?? []) as Array<{ plot_group_id: string; plot_count: number; voting_value: number }>;
+
   async function addPlot(formData: FormData) {
     "use server";
     const supabase = await createSupabaseServerClient();
@@ -156,14 +160,54 @@ export default async function PlotRegistryPage(props: PageProps) {
       .maybeSingle();
     if (b.error || !b.data?.id) return redirectWithError("Plot B not found.");
 
-    const res = await supabase.rpc("join_two_plots", {
-      p_plot_id_a: a.data.id,
-      p_plot_id_b: b.data.id,
+    // UPDATED Join Plots: create a plot group explicitly, then add 2 plots to it.
+    const groupRes = await supabase.rpc("create_plot_group", { p_note: null });
+    if (groupRes.error || !groupRes.data) {
+      return redirectWithError(groupRes.error?.message ?? "Unable to create plot group.");
+    }
+
+    const addA = await supabase.rpc("add_plot_to_group", {
+      p_plot_id: a.data.id,
+      p_plot_group_id: groupRes.data,
       p_note: null,
     });
+    if (addA.error) return redirectWithError(addA.error.message);
 
+    const addB = await supabase.rpc("add_plot_to_group", {
+      p_plot_id: b.data.id,
+      p_plot_group_id: groupRes.data,
+      p_note: null,
+    });
+    if (addB.error) return redirectWithError(addB.error.message);
+
+    return redirectWithMessage(`Plots grouped: ${groupRes.data}`);
+  }
+
+  async function addPlotToGroup(formData: FormData) {
+    "use server";
+    const supabase = await createSupabaseServerClient();
+    if (!supabase) return;
+
+    const plotCode = String(formData.get("plot_code") ?? "").trim();
+    const groupId = String(formData.get("plot_group_id") ?? "").trim();
+    const confirmed = String(formData.get("confirm") ?? "") === "on";
+    if (!confirmed) return redirectWithError("Confirmation is required.");
+
+    const plot = await supabase
+      .schema("ow")
+      .from("plots")
+      .select("id")
+      .eq("plot_code", plotCode)
+      .maybeSingle();
+    if (plot.error || !plot.data?.id) return redirectWithError("Plot not found.");
+
+    const res = await supabase.rpc("add_plot_to_group", {
+      p_plot_id: plot.data.id,
+      p_plot_group_id: groupId,
+      p_note: null,
+    });
     if (res.error) return redirectWithError(res.error.message);
-    return redirectWithMessage("Plots joined.");
+    return redirectWithMessage("Plot added to group.");
   }
 
   async function createUser(formData: FormData) {
@@ -292,11 +336,9 @@ export default async function PlotRegistryPage(props: PageProps) {
               </td>
               <td>{r.is_registered ? "registered" : "unregistered"}</td>
               <td>
-                {r.plot_group_id && r.group_plot_count === 2 ? (
-                  <>joined ({r.plot_group_id})</>
-                ) : (
-                  "—"
-                )}
+                {r.plot_group_id && r.group_plot_count >= 2
+                  ? `grouped (${r.plot_group_id})`
+                  : "—"}
               </td>
               <td>
                 <ul>
@@ -373,6 +415,47 @@ export default async function PlotRegistryPage(props: PageProps) {
           <input name="confirm" type="checkbox" required /> Confirm join plots
         </label>
         <button type="submit">Join Plots</button>
+      </form>
+
+      <h2>Plot Groups</h2>
+      <p>Group voting value equals number of plots in the group.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Group identifier</th>
+            <th>Number of plots in group</th>
+            <th>Computed voting value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {plotGroups.map((g) => (
+            <tr key={g.plot_group_id}>
+              <td>{g.plot_group_id}</td>
+              <td>{g.plot_count}</td>
+              <td>{g.voting_value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h3>Add plot to existing group (2+)</h3>
+      <form action={addPlotToGroup}>
+        <div>
+          <label>
+            Plot ID
+            <input name="plot_code" required />
+          </label>
+        </div>
+        <div>
+          <label>
+            Group identifier (UUID)
+            <input name="plot_group_id" required />
+          </label>
+        </div>
+        <label>
+          <input name="confirm" type="checkbox" required /> Confirm add plot to group
+        </label>
+        <button type="submit">Add to Group</button>
       </form>
     </section>
   );
